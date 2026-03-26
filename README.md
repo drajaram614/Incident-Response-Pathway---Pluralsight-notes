@@ -2,13 +2,15 @@
 
 This repository contains structured notes for each phase of the Incident Response (IR) pathway.
 
+---
+
 ## Table of Contents
 
-- [Detection and Analysis (Initial Triage Notes)](detection-and-analysis-initial-triage-notes.md)
-- [Host Analysis Notes](host-analysis-notes.md)
-- [Network Analysis Notes](Network%20analysis/)
-- [Eradication Phase Notes](Eradication%20Phase%20of%20Incident%20Response/)
-- [Windows Event Logs Forensics / Windows Analysis / Windows Registry Forensics Notes](Windows%20File%20System%20and%20Browser%20Forensics/)
+- [Detection and Analysis (Initial Triage Notes)](./detection-and-analysis-initial-triage-notes.md)
+- [Host Analysis Notes](./host-analysis-notes.md)
+- [Network Analysis Notes](./Network%20analysis.md)
+- [Eradication Phase Notes](./Eradication%20Phase%20of%20Incident%20Response.md)
+- [Windows Event Logs Forensics / Windows Analysis / Windows Registry Forensics Notes](./Windows%20File%20System%20and%20Browser%20Forensics.md)
 
 ---
 
