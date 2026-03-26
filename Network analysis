@@ -1,0 +1,785 @@
+Main tools used throughout the course:
+
+* Kibana
+* Elasticsearch
+* Zeek
+* tcpdump
+
+---
+
+# Network Analysis Incident Response – Notes
+
+---
+
+# 1. Investigation Workflow (Overall Strategy)
+
+Network incident response usually follows this flow:
+
+```
+1 Identify suspicious communication
+2 Find infected host
+3 Track lateral movement
+4 Identify attacker infrastructure (C2)
+5 Detect enumeration / scanning
+6 Investigate critical servers
+7 Detect data exfiltration
+8 Collect IOCs and mitigation artifacts
+```
+
+Goal:
+
+```
+Understand the full attack timeline
+```
+
+---
+
+# 2. Tools Used in the Investigation
+
+---
+
+# Kibana
+
+Tool:
+Kibana
+
+Purpose:
+
+```
+Search and analyze network logs
+```
+
+Why used:
+
+* quickly search huge datasets
+* identify patterns in traffic
+* filter by IP, port, protocol
+
+Typical things you search for:
+
+```
+source IP
+destination IP
+ports
+protocols
+connection counts
+```
+
+Example filters:
+
+```
+source.ip = 172.31.37.10
+destination.ip = 172.31.101.111
+destination.port = 443
+```
+
+What this reveals:
+
+```
+who is talking to who
+how often
+which ports are used
+```
+
+---
+
+# Elasticsearch
+
+Tool:
+Elasticsearch
+
+Purpose:
+
+```
+Stores the network logs being analyzed
+```
+
+Kibana simply visualizes and queries the data stored here.
+
+---
+
+# Zeek
+
+Tool:
+Zeek
+
+Purpose:
+
+```
+converts packet captures into structured logs
+```
+
+Zeek produces logs like:
+
+```
+conn.log
+http.log
+dns.log
+ssl.log
+files.log
+```
+
+Why Zeek is powerful:
+
+```
+extracts metadata from packets
+makes traffic searchable
+```
+
+Example information extracted:
+
+```
+source IP
+destination IP
+ports
+protocol
+DNS queries
+HTTP requests
+TLS certificates
+```
+
+---
+
+# tcpdump
+
+Tool:
+tcpdump
+
+Purpose:
+
+```
+inspect raw network packets
+```
+
+Used when analysts need **low-level packet inspection**.
+
+---
+
+# 3. Step 1 – Identify Suspicious Communication
+
+First step:
+
+Look for **unusual external connections**.
+
+Example discovered:
+
+```
+172.31.37.20 → iamironcat.com
+```
+
+Indicators:
+
+```
+unknown domain
+unusual traffic volume
+suspicious ports
+```
+
+Goal:
+
+```
+find patient zero
+```
+
+---
+
+# 4. Step 2 – Identify Infected Hosts
+
+Using Kibana filters:
+
+```
+source.ip = suspicious host
+```
+
+Example:
+
+```
+172.31.37.20
+```
+
+Find:
+
+```
+who it communicates with
+what ports it uses
+how often
+```
+
+Discovery:
+
+```
+communication with attacker server
+```
+
+---
+
+# 5. Step 3 – Track Lateral Movement
+
+Next question:
+
+```
+Did the attacker move to other machines?
+```
+
+Search:
+
+```
+internal host → internal host communication
+```
+
+Example:
+
+```
+172.31.37.10 → 172.31.37.20
+port 445
+```
+
+Port 445 = SMB
+
+Purpose of SMB:
+
+```
+file sharing
+remote execution
+```
+
+Why attackers use SMB:
+
+```
+lateral movement
+ransomware spreading
+```
+
+---
+
+# 6. Investigating SMB Traffic
+
+Commands used:
+
+Example tcpdump filtering:
+
+```
+tcpdump -nn -r incident.pcap host 172.31.37.20
+```
+
+What it does:
+
+```
+shows packets involving the host
+```
+
+What analysts look for:
+
+```
+SMB sessions
+file transfers
+authentication attempts
+```
+
+---
+
+# 7. Confirming Command and Control (C2)
+
+Host analysis revealed an IOC:
+
+```
+172.31.101.111
+```
+
+Kibana filter:
+
+```
+source.ip = 172.31.37.10
+destination.ip = 172.31.101.111
+```
+
+Result:
+
+```
+11,000+ connections
+```
+
+Port used:
+
+```
+443 (HTTPS)
+```
+
+Meaning:
+
+```
+encrypted command and control channel
+```
+
+---
+
+# 8. Beaconing Detection
+
+Beaconing pattern:
+
+```
+infected host → C2
+regular intervals
+```
+
+Signs:
+
+```
+repeated connections
+similar sizes
+consistent timing
+```
+
+What this means:
+
+```
+malware calling home
+```
+
+---
+
+# 9. Finding Malware Downloads
+
+Using Zeek HTTP logs:
+
+```
+http.log
+```
+
+Command example:
+
+```
+cat http.log
+```
+
+Look for:
+
+```
+URI
+downloaded files
+```
+
+Discovery:
+
+```
+payload.bat
+```
+
+Meaning:
+
+```
+malware download
+```
+
+---
+
+# 10. Detecting Enumeration / Scanning
+
+Attackers must scan the network first.
+
+Evidence found:
+
+```
+172.31.37.10 making thousands of connections
+```
+
+Pattern:
+
+```
+256 attempts per port
+~1900 attempts per host
+```
+
+This indicates:
+
+```
+SYN scan
+```
+
+---
+
+# SYN Scan Explanation
+
+Normal TCP handshake:
+
+```
+SYN
+SYN-ACK
+ACK
+```
+
+Scan behavior:
+
+```
+SYN sent
+no final ACK
+```
+
+Purpose:
+
+```
+identify open ports without full connection
+```
+
+---
+
+# Packet Comparison Example
+
+Case 1 – dead host:
+
+```
+SYN
+(no response)
+```
+
+Meaning:
+
+```
+host not alive
+```
+
+Case 2 – active host:
+
+```
+SYN
+SYN-ACK
+(no ACK)
+```
+
+Meaning:
+
+```
+port open
+```
+
+---
+
+# 11. Confirming SMB Lateral Movement
+
+After scanning:
+
+```
+attacker connects to open SMB ports
+```
+
+Traffic shows:
+
+```
+successful SMB sessions
+```
+
+Meaning:
+
+```
+ransomware propagation
+```
+
+---
+
+# 12. Investigating Critical Servers
+
+One server still unexplored:
+
+```
+172.31.64.10
+```
+
+This is:
+
+```
+Dark Energy Application Server
+```
+
+Important:
+
+```
+critical business system
+```
+
+---
+
+# 13. Suspicious DNS Traffic
+
+Filter:
+
+```
+source.ip = 172.31.64.10
+```
+
+Observation:
+
+```
+huge number of DNS queries
+```
+
+Destination:
+
+```
+172.31.0.2 (internal DNS server)
+```
+
+This is normal direction but **unusual volume**.
+
+---
+
+# 14. DNS Entropy Analysis
+
+DNS traffic extracted and analyzed with Zeek.
+
+Special script used:
+
+```
+dns_entropy.zeek
+```
+
+Purpose:
+
+```
+detect random encoded DNS queries
+```
+
+---
+
+# What is Entropy
+
+Entropy = randomness score.
+
+Example:
+
+Normal DNS:
+
+```
+google.com
+reddit.com
+```
+
+Entropy score:
+
+```
+2.5 – 2.8
+```
+
+Suspicious:
+
+```
+as9df8sdf9sdff.dirtylitter.iamironcat.com
+```
+
+Entropy:
+
+```
+very high
+```
+
+Meaning:
+
+```
+encoded data
+```
+
+---
+
+# 15. Detecting DNS Exfiltration
+
+Suspicious domain discovered:
+
+```
+dirtylitter.iamironcat.com
+```
+
+Queries look like:
+
+```
+encodeddata.dirtylitter.iamironcat.com
+```
+
+Meaning:
+
+```
+data encoded inside DNS queries
+```
+
+Technique:
+
+```
+DNS tunneling
+```
+
+---
+
+# DNS Exfiltration Count
+
+Command used:
+
+```
+grep dirtylitter dns_entropy.log | wc -l
+```
+
+Result:
+
+```
+4260 DNS queries
+```
+
+Meaning:
+
+```
+large data transfer
+```
+
+---
+
+# Identifying Source Host
+
+Command concept:
+
+```
+cut -f1 dns_entropy.log | sort | uniq
+```
+
+Purpose:
+
+```
+identify originating hosts
+```
+
+Result:
+
+```
+all traffic from 172.31.64.10
+```
+
+Meaning:
+
+```
+critical server exfiltrating data
+```
+
+---
+
+# 16. Real Objective of the Attack
+
+Initially it appeared to be:
+
+```
+ransomware attack
+```
+
+But investigation reveals:
+
+```
+data theft
+```
+
+Ransomware was used as:
+
+```
+distraction
+```
+
+Actual goal:
+
+```
+steal critical application data
+```
+
+---
+
+# 17. Final Attack Timeline
+
+```
+1 Phishing email delivered
+2 Malicious Office macro executed
+3 Malware contacts C2 server
+4 Payload downloaded
+5 Internal SYN scan performed
+6 SMB hosts discovered
+7 Ransomware spread
+8 Critical server accessed
+9 Data exfiltrated via DNS tunneling
+```
+
+---
+
+# 18. Indicators of Compromise (IOCs)
+
+Collected artifacts:
+
+IPs
+
+```
+172.31.101.111
+```
+
+Domain
+
+```
+dirtylitter.iamironcat.com
+```
+
+File
+
+```
+payload.bat
+```
+
+Ports
+
+```
+443
+8000
+445
+53
+```
+
+Techniques
+
+```
+SYN scanning
+SMB lateral movement
+DNS tunneling
+```
+
+---
+
+# 19. Key Lessons From the Course
+
+1. Always analyze **internal traffic (east-west)**.
+
+2. Combine:
+
+```
+host analysis
++
+network analysis
+```
+
+3. Ransomware may hide **other objectives**.
+
+4. Look for:
+
+```
+beaconing
+scanning
+lateral movement
+exfiltration
+```
+
+5. DNS traffic can hide **covert channels**.
+
+---
+
+# Simple Investigation Mindset
+
+Always ask:
+
+```
+Who talked to who?
+How often?
+Why that port?
+Is the behavior normal?
+What happened before this?
+What happened after?
+```
+
+---
