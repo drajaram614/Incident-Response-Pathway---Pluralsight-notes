@@ -1,5 +1,11 @@
 
-Main tools used throughout the course:
+---
+
+# Network Analysis Incident Response – Full Notes
+
+---
+
+## Main Tools Used Throughout the Course
 
 * Kibana
 * Elasticsearch
@@ -8,13 +14,7 @@ Main tools used throughout the course:
 
 ---
 
-# Network Analysis Incident Response – Full Notes
-
----
-
 # 1. Investigation Workflow (Overall Strategy)
-
-Network incident response usually follows this flow:
 
 ```
 1 Identify suspicious communication
@@ -27,46 +27,33 @@ Network incident response usually follows this flow:
 8 Collect IOCs and mitigation artifacts
 ```
 
-Goal:
+### Goal
 
 ```
-Understand the full attack timeline
+Understand the full attack timeline end-to-end
 ```
 
 ---
 
-# 2. Tools Used in the Investigation
+# 2. Tools Explained
 
 ---
 
-# Kibana
+## Kibana
 
-Tool:
-Kibana
-
-Purpose:
+**Purpose**
 
 ```
-Search and analyze network logs
+Search and analyze network logs quickly
 ```
 
-Why used:
+**Why Used**
 
-* quickly search huge datasets
-* identify patterns in traffic
-* filter by IP, port, protocol
+* Query massive datasets fast
+* Filter by IP, port, protocol
+* Identify traffic patterns
 
-Typical things you search for:
-
-```
-source IP
-destination IP
-ports
-protocols
-connection counts
-```
-
-Example filters:
+**Example Filters**
 
 ```
 source.ip = 172.31.37.10
@@ -74,324 +61,255 @@ destination.ip = 172.31.101.111
 destination.port = 443
 ```
 
-What this reveals:
+**What You Learn**
 
 ```
-who is talking to who
-how often
-which ports are used
-```
-
----
-
-# Elasticsearch
-
-Tool:
-Elasticsearch
-
-Purpose:
-
-```
-Stores the network logs being analyzed
-```
-
-Kibana simply visualizes and queries the data stored here.
-
----
-
-# Zeek
-
-Tool:
-Zeek
-
-Purpose:
-
-```
-converts packet captures into structured logs
-```
-
-Zeek produces logs like:
-
-```
-conn.log
-http.log
-dns.log
-ssl.log
-files.log
-```
-
-Why Zeek is powerful:
-
-```
-extracts metadata from packets
-makes traffic searchable
-```
-
-Example information extracted:
-
-```
-source IP
-destination IP
-ports
-protocol
-DNS queries
-HTTP requests
-TLS certificates
+Who is communicating
+Frequency of communication
+Ports and protocols used
 ```
 
 ---
 
-# tcpdump
+## Elasticsearch
 
-Tool:
-tcpdump
-
-Purpose:
+**Purpose**
 
 ```
-inspect raw network packets
+Stores all network logs
 ```
 
-Used when analysts need **low-level packet inspection**.
+**Key Idea**
+
+```
+Kibana = visualization layer
+Elasticsearch = data storage
+```
+
+---
+
+## Zeek
+
+**Purpose**
+
+```
+Convert packet captures into structured logs
+```
+
+**Key Logs**
+
+```
+conn.log   → connections
+http.log   → web traffic
+dns.log    → DNS queries
+ssl.log    → TLS traffic
+files.log  → transferred files
+```
+
+**Why Important**
+
+```
+Turns raw packets into readable, searchable data
+```
+
+---
+
+## tcpdump
+
+**Purpose**
+
+```
+Inspect raw packet-level traffic
+```
+
+**Example**
+
+```
+tcpdump -nn -r incident.pcap host 172.31.37.20
+```
+
+**Why Used**
+
+```
+Deep inspection when logs aren’t enough
+```
 
 ---
 
 # 3. Step 1 – Identify Suspicious Communication
 
-First step:
+**Goal**
 
-Look for **unusual external connections**.
+```
+Find unusual outbound traffic
+```
 
-Example discovered:
+**Example**
 
 ```
 172.31.37.20 → iamironcat.com
 ```
 
-Indicators:
+**Indicators**
 
-```
-unknown domain
-unusual traffic volume
-suspicious ports
-```
-
-Goal:
-
-```
-find patient zero
-```
+* Unknown domains
+* Strange ports
+* High traffic volume
 
 ---
 
-# 4. Step 2 – Identify Infected Hosts
+# 4. Step 2 – Identify Infected Host
 
-Using Kibana filters:
+**Method**
 
 ```
-source.ip = suspicious host
+Filter by source IP in Kibana
 ```
 
-Example:
+**Example**
 
 ```
 172.31.37.20
 ```
 
-Find:
+**Find**
 
 ```
-who it communicates with
-what ports it uses
-how often
-```
-
-Discovery:
-
-```
-communication with attacker server
+External connections
+Communication patterns
+Possible malware activity
 ```
 
 ---
 
 # 5. Step 3 – Track Lateral Movement
 
-Next question:
+**Question**
 
 ```
-Did the attacker move to other machines?
+Did the attacker spread internally?
 ```
 
-Search:
+**Example**
 
 ```
-internal host → internal host communication
+172.31.37.10 → 172.31.37.20 (port 445)
 ```
 
-Example:
+**Port 445 = SMB**
+
+**Why Important**
 
 ```
-172.31.37.10 → 172.31.37.20
-port 445
-```
-
-Port 445 = SMB
-
-Purpose of SMB:
-
-```
-file sharing
-remote execution
-```
-
-Why attackers use SMB:
-
-```
-lateral movement
-ransomware spreading
+Used for file sharing and remote execution
+Common for ransomware spread
 ```
 
 ---
 
-# 6. Investigating SMB Traffic
+# 6. SMB Investigation
 
-Commands used:
-
-Example tcpdump filtering:
+**Command**
 
 ```
 tcpdump -nn -r incident.pcap host 172.31.37.20
 ```
 
-What it does:
+**Look For**
 
-```
-shows packets involving the host
-```
-
-What analysts look for:
-
-```
-SMB sessions
-file transfers
-authentication attempts
-```
+* SMB sessions
+* File transfers
+* Authentication attempts
 
 ---
 
-# 7. Confirming Command and Control (C2)
+# 7. Command & Control (C2)
 
-Host analysis revealed an IOC:
+**IOC Found**
 
 ```
 172.31.101.111
 ```
 
-Kibana filter:
+**Filter**
 
 ```
-source.ip = 172.31.37.10
-destination.ip = 172.31.101.111
+source.ip = 172.31.37.10 AND destination.ip = 172.31.101.111
 ```
 
-Result:
+**Result**
 
 ```
 11,000+ connections
 ```
 
-Port used:
+**Meaning**
 
 ```
-443 (HTTPS)
-```
-
-Meaning:
-
-```
-encrypted command and control channel
+Active C2 communication over HTTPS (port 443)
 ```
 
 ---
 
 # 8. Beaconing Detection
 
-Beaconing pattern:
+**Pattern**
 
 ```
-infected host → C2
-regular intervals
+Regular repeated connections to same IP
 ```
 
-Signs:
+**Indicators**
+
+* Consistent timing
+* Similar packet sizes
+* High frequency
+
+**Meaning**
 
 ```
-repeated connections
-similar sizes
-consistent timing
-```
-
-What this means:
-
-```
-malware calling home
+Malware calling home
 ```
 
 ---
 
-# 9. Finding Malware Downloads
+# 9. Malware Download Detection
 
-Using Zeek HTTP logs:
-
-```
-http.log
-```
-
-Command example:
+**Using Zeek**
 
 ```
 cat http.log
 ```
 
-Look for:
+**Look For**
 
-```
-URI
-downloaded files
-```
+* Suspicious URIs
+* Downloaded files
 
-Discovery:
+**Example**
 
 ```
 payload.bat
 ```
 
-Meaning:
-
-```
-malware download
-```
-
 ---
 
-# 10. Detecting Enumeration / Scanning
+# 10. Detect Enumeration / Scanning
 
-Attackers must scan the network first.
-
-Evidence found:
+**Observation**
 
 ```
-172.31.37.10 making thousands of connections
+172.31.37.10 scanning network
 ```
 
-Pattern:
+**Pattern**
 
 ```
-256 attempts per port
+~256 attempts per port
 ~1900 attempts per host
 ```
 
-This indicates:
+**Type**
 
 ```
 SYN scan
@@ -399,208 +317,141 @@ SYN scan
 
 ---
 
-# SYN Scan Explanation
+## SYN Scan Explained
 
-Normal TCP handshake:
-
-```
-SYN
-SYN-ACK
-ACK
-```
-
-Scan behavior:
+**Normal**
 
 ```
-SYN sent
-no final ACK
+SYN → SYN-ACK → ACK
 ```
 
-Purpose:
+**Scan**
 
 ```
-identify open ports without full connection
+SYN → SYN-ACK → (no ACK)
+```
+
+**Purpose**
+
+```
+Find open ports stealthily
 ```
 
 ---
 
-# Packet Comparison Example
-
-Case 1 – dead host:
-
-```
-SYN
-(no response)
-```
-
-Meaning:
-
-```
-host not alive
-```
-
-Case 2 – active host:
-
-```
-SYN
-SYN-ACK
-(no ACK)
-```
-
-Meaning:
-
-```
-port open
-```
-
----
-
-# 11. Confirming SMB Lateral Movement
+# 11. Confirm Lateral Movement
 
 After scanning:
 
 ```
-attacker connects to open SMB ports
+Connections to SMB (445)
 ```
 
-Traffic shows:
+**Meaning**
 
 ```
-successful SMB sessions
-```
-
-Meaning:
-
-```
-ransomware propagation
+Ransomware spreading across hosts
 ```
 
 ---
 
-# 12. Investigating Critical Servers
+# 12. Investigate Critical Server
 
-One server still unexplored:
+**Target**
 
 ```
 172.31.64.10
 ```
 
-This is:
+**Role**
 
 ```
-Dark Energy Application Server
-```
-
-Important:
-
-```
-critical business system
+Critical application server
 ```
 
 ---
 
-# 13. Suspicious DNS Traffic
+# 13. Suspicious DNS Activity
 
-Filter:
+**Filter**
 
 ```
 source.ip = 172.31.64.10
 ```
 
-Observation:
+**Observation**
 
 ```
-huge number of DNS queries
+Large volume of DNS requests
 ```
 
-Destination:
+**Destination**
 
 ```
-172.31.0.2 (internal DNS server)
+172.31.0.2 (internal DNS)
 ```
 
-This is normal direction but **unusual volume**.
+**Insight**
+
+```
+Direction normal, volume abnormal
+```
 
 ---
 
 # 14. DNS Entropy Analysis
 
-DNS traffic extracted and analyzed with Zeek.
-
-Special script used:
+**Tool**
 
 ```
-dns_entropy.zeek
+Zeek + dns_entropy script
 ```
 
-Purpose:
+**Purpose**
 
 ```
-detect random encoded DNS queries
+Detect encoded/random DNS queries
 ```
 
 ---
 
-# What is Entropy
+## Entropy Concept
 
-Entropy = randomness score.
-
-Example:
-
-Normal DNS:
+**Normal**
 
 ```
-google.com
-reddit.com
+google.com → low entropy (~2.5)
 ```
 
-Entropy score:
+**Suspicious**
 
 ```
-2.5 – 2.8
+a8sd9f8sd9f.domain.com → high entropy
 ```
 
-Suspicious:
+**Meaning**
 
 ```
-as9df8sdf9sdff.dirtylitter.iamironcat.com
-```
-
-Entropy:
-
-```
-very high
-```
-
-Meaning:
-
-```
-encoded data
+Encoded data inside DNS queries
 ```
 
 ---
 
-# 15. Detecting DNS Exfiltration
+# 15. DNS Exfiltration Discovery
 
-Suspicious domain discovered:
+**Domain**
 
 ```
 dirtylitter.iamironcat.com
 ```
 
-Queries look like:
+**Pattern**
 
 ```
 encodeddata.dirtylitter.iamironcat.com
 ```
 
-Meaning:
-
-```
-data encoded inside DNS queries
-```
-
-Technique:
+**Technique**
 
 ```
 DNS tunneling
@@ -608,9 +459,9 @@ DNS tunneling
 
 ---
 
-# DNS Exfiltration Count
+## Key Commands
 
-Command used:
+**Count Queries**
 
 ```
 grep dirtylitter dns_entropy.log | wc -l
@@ -619,123 +470,96 @@ grep dirtylitter dns_entropy.log | wc -l
 Result:
 
 ```
-4260 DNS queries
-```
-
-Meaning:
-
-```
-large data transfer
+4260 queries
 ```
 
 ---
 
-# Identifying Source Host
-
-Command concept:
+**Find Source Hosts**
 
 ```
 cut -f1 dns_entropy.log | sort | uniq
 ```
 
-Purpose:
-
-```
-identify originating hosts
-```
-
 Result:
 
 ```
-all traffic from 172.31.64.10
-```
-
-Meaning:
-
-```
-critical server exfiltrating data
+172.31.64.10 only
 ```
 
 ---
 
-# 16. Real Objective of the Attack
+# 16. True Objective of Attack
 
-Initially it appeared to be:
-
-```
-ransomware attack
-```
-
-But investigation reveals:
+**Initial Assumption**
 
 ```
-data theft
+Ransomware
 ```
 
-Ransomware was used as:
+**Reality**
 
 ```
-distraction
+Data exfiltration
 ```
 
-Actual goal:
+**Insight**
 
 ```
-steal critical application data
+Ransomware = distraction
 ```
 
 ---
 
-# 17. Final Attack Timeline
+# 17. Full Attack Timeline
 
 ```
 1 Phishing email delivered
-2 Malicious Office macro executed
-3 Malware contacts C2 server
+2 Malicious macro executed
+3 Malware contacts C2
 4 Payload downloaded
-5 Internal SYN scan performed
+5 Internal SYN scan
 6 SMB hosts discovered
-7 Ransomware spread
+7 Ransomware deployed
 8 Critical server accessed
-9 Data exfiltrated via DNS tunneling
+9 Data exfiltrated via DNS
 ```
 
 ---
 
 # 18. Indicators of Compromise (IOCs)
 
-Collected artifacts:
-
-IPs
+**IP**
 
 ```
 172.31.101.111
 ```
 
-Domain
+**Domain**
 
 ```
 dirtylitter.iamironcat.com
 ```
 
-File
+**File**
 
 ```
 payload.bat
 ```
 
-Ports
+**Ports**
 
 ```
-443
-8000
-445
-53
+443 (C2)
+8000 (web shell)
+445 (SMB)
+53 (DNS)
 ```
 
-Techniques
+**Techniques**
 
 ```
+Beaconing
 SYN scanning
 SMB lateral movement
 DNS tunneling
@@ -743,34 +567,28 @@ DNS tunneling
 
 ---
 
-# 19. Key Lessons From the Course
+# 19. Key Lessons
 
-1. Always analyze **internal traffic (east-west)**.
-
+1. Always analyze **internal (east-west) traffic**
 2. Combine:
 
-```
-host analysis
-+
-network analysis
-```
+   ```
+   Host analysis + Network analysis
+   ```
+3. Ransomware may hide **secondary objectives**
+4. Watch for:
 
-3. Ransomware may hide **other objectives**.
-
-4. Look for:
-
-```
-beaconing
-scanning
-lateral movement
-exfiltration
-```
-
-5. DNS traffic can hide **covert channels**.
+   ```
+   Beaconing
+   Scanning
+   Lateral movement
+   Exfiltration
+   ```
+5. DNS can be used for **covert data transfer**
 
 ---
 
-# Simple Investigation Mindset
+# 20. Investigation Mindset
 
 Always ask:
 
@@ -778,8 +596,8 @@ Always ask:
 Who talked to who?
 How often?
 Why that port?
-Is the behavior normal?
-What happened before this?
+Is this normal behavior?
+What happened before?
 What happened after?
 ```
 
