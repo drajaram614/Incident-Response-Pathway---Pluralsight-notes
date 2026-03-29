@@ -2,15 +2,20 @@
 
 # **INCIDENT FORENSICS NOTES (Windows Logs + NTFS + Browser)**
 
-Logs → Who logged in + what ran
-UserAssist → What user clicked
-RecentDocs → What files opened
-ShellBags → What folders accessed
-ShimCache → What existed
-AmCache → What executed
-MFT → Full timeline
-Browser → Intent + downloads
-Run/Services/Tasks → Persistence
+
+| Artifact                       | What It Reveals                                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| **Event Logs**                 | Authentication activity (logons/logoffs) and process creation events (who accessed the system and what ran)  |
+| **UserAssist**                 | Programs executed by the user via GUI (tracks execution frequency and last run time)                         |
+| **RecentDocs**                 | Recently opened files (evidence of file access, even if file is deleted)                                     |
+| **ShellBags**                  | Folders browsed in Windows Explorer (including deleted or external locations)                                |
+| **ShimCache (AppCompatCache)** | Files that existed on the system (useful for identifying attacker tools; execution not guaranteed on Win10+) |
+| **AmCache**                    | Evidence of executed programs (includes hashes, file paths, and metadata)                                    |
+| **MFT ($MFT)**                 | Complete file system timeline (creation, modification, access, deletion of files)                            |
+| **Browser History**            | User/attacker activity, intent, downloads, and external communication                                        |
+| **Run Keys**                   | Persistence via programs that execute at user logon                                                          |
+| **Services**                   | Persistence through background services (often stealthier and system-level)                                  |
+| **Scheduled Tasks**            | Persistence via automated or recurring execution (time-based or trigger-based)                               |
 ---
 
 # **1. Investigation Flow (Big Picture)**
