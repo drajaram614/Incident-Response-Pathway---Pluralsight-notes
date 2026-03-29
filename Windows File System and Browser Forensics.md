@@ -18,6 +18,44 @@
 | **Scheduled Tasks**            | Persistence via automated or recurring execution (time-based or trigger-based)                               |
 ---
 
+Good move—this is what takes your guide from “notes” → **real investigator reference**.
+
+Here’s a **clean, GitHub-ready expanded table** with tools mapped to each artifact 👇
+
+---
+
+# 📂 Artifact → What It Reveals → Tools to Use
+
+| Artifact                       | What It Reveals                                                                        | Tools Commonly Used                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| **Event Logs**                 | Authentication (logons/logoffs) and process execution (who accessed system, what ran)  | **Event Viewer**, **EvtxECmd**, **Chainsaw**, **Log Parser**          |
+| **UserAssist**                 | GUI-based program execution (run count + last execution time)                          | **Registry Explorer**, **RECmd**, **Zimmerman Tools**                 |
+| **RecentDocs**                 | Recently accessed/opened files (even if deleted)                                       | **Registry Explorer**, **RECmd**                                      |
+| **ShellBags**                  | Folder access history (including deleted folders, USB paths, network paths)            | **ShellBags Explorer**, **SBECmd**                                    |
+| **ShimCache (AppCompatCache)** | Files that existed on system (helps identify attacker tools; execution not guaranteed) | **AppCompatCacheParser**, **ShimCacheParser**, **Zimmerman Tools**    |
+| **AmCache**                    | Evidence of executed programs (file hashes, paths, metadata)                           | **AmcacheParser**, **Amcache.hve parsing tools**, **Zimmerman Tools** |
+| **MFT ($MFT)**                 | Full filesystem timeline (create, modify, access, delete)                              | **MFTECmd**, **AnalyzeMFT**, **Autopsy**, **Sleuth Kit**              |
+| **Browser History**            | User/attacker activity, downloads, intent, external connections                        | **Hindsight**, **Browser History Examiner**, **Autopsy**              |
+| **Run Keys**                   | Persistence via programs executed at user logon                                        | **Registry Explorer**, **RECmd**, **Autoruns**                        |
+| **Services**                   | Persistence via background/system-level services                                       | **Autoruns**, **sc.exe**, **Registry Explorer**                       |
+| **Scheduled Tasks**            | Persistence via timed or trigger-based execution                                       | **Autoruns**, **schtasks.exe**, **Task Scheduler**, **RECmd**         |
+
+---
+
+| Goal                   | Tool              |
+| ---------------------- | ----------------- |
+| Parse Registry Fast    | RECmd             |
+| Deep Registry Analysis | Registry Explorer |
+| Parse Event Logs       | EvtxECmd          |
+| Detect Attacks in Logs | Chainsaw          |
+| Build Timeline         | MFTECmd           |
+| Confirm Execution      | AmCache           |
+| Find Tools Used        | ShimCache         |
+| Find Persistence       | Autoruns          |
+| Analyze Browser        | Hindsight         |
+
+
+
 # **1. Investigation Flow (Big Picture)**
 
 ### **Step-by-Step Workflow**
