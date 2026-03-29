@@ -2,6 +2,15 @@
 
 # **INCIDENT FORENSICS NOTES (Windows Logs + NTFS + Browser)**
 
+Logs → Who logged in + what ran
+UserAssist → What user clicked
+RecentDocs → What files opened
+ShellBags → What folders accessed
+ShimCache → What existed
+AmCache → What executed
+MFT → Full timeline
+Browser → Intent + downloads
+Run/Services/Tasks → Persistence
 ---
 
 # **1. Investigation Flow (Big Picture)**
