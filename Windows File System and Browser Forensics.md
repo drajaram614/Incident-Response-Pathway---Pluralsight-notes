@@ -3,6 +3,10 @@
 # **INCIDENT FORENSICS NOTES (Windows Logs + NTFS + Browser)**
 
 
+---
+
+# 📂 Artifact → What It Reveals → Tools to Use
+
 | Artifact                       | What It Reveals                                                                        | Tools Commonly Used                                                   |
 | ------------------------------ | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | **Event Logs**                 | Authentication (logons/logoffs) and process execution (who accessed system, what ran)  | **Event Viewer**, **EvtxECmd**, **Chainsaw**, **Log Parser**          |
@@ -16,6 +20,8 @@
 | **Run Keys**                   | Persistence via programs executed at user logon                                        | **Registry Explorer**, **RECmd**, **Autoruns**                        |
 | **Services**                   | Persistence via background/system-level services                                       | **Autoruns**, **sc.exe**, **Registry Explorer**                       |
 | **Scheduled Tasks**            | Persistence via timed or trigger-based execution                                       | **Autoruns**, **schtasks.exe**, **Task Scheduler**, **RECmd**         |
+
+---
 
 
 # **1. Investigation Flow (Big Picture)**
