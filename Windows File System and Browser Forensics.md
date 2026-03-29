@@ -3,29 +3,6 @@
 # **INCIDENT FORENSICS NOTES (Windows Logs + NTFS + Browser)**
 
 
-| Artifact                       | What It Reveals                                                                                              |
-| ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| **Event Logs**                 | Authentication activity (logons/logoffs) and process creation events (who accessed the system and what ran)  |
-| **UserAssist**                 | Programs executed by the user via GUI (tracks execution frequency and last run time)                         |
-| **RecentDocs**                 | Recently opened files (evidence of file access, even if file is deleted)                                     |
-| **ShellBags**                  | Folders browsed in Windows Explorer (including deleted or external locations)                                |
-| **ShimCache (AppCompatCache)** | Files that existed on the system (useful for identifying attacker tools; execution not guaranteed on Win10+) |
-| **AmCache**                    | Evidence of executed programs (includes hashes, file paths, and metadata)                                    |
-| **MFT ($MFT)**                 | Complete file system timeline (creation, modification, access, deletion of files)                            |
-| **Browser History**            | User/attacker activity, intent, downloads, and external communication                                        |
-| **Run Keys**                   | Persistence via programs that execute at user logon                                                          |
-| **Services**                   | Persistence through background services (often stealthier and system-level)                                  |
-| **Scheduled Tasks**            | Persistence via automated or recurring execution (time-based or trigger-based)                               |
----
-
-Good move—this is what takes your guide from “notes” → **real investigator reference**.
-
-Here’s a **clean, GitHub-ready expanded table** with tools mapped to each artifact 👇
-
----
-
-# 📂 Artifact → What It Reveals → Tools to Use
-
 | Artifact                       | What It Reveals                                                                        | Tools Commonly Used                                                   |
 | ------------------------------ | -------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
 | **Event Logs**                 | Authentication (logons/logoffs) and process execution (who accessed system, what ran)  | **Event Viewer**, **EvtxECmd**, **Chainsaw**, **Log Parser**          |
@@ -39,21 +16,6 @@ Here’s a **clean, GitHub-ready expanded table** with tools mapped to each arti
 | **Run Keys**                   | Persistence via programs executed at user logon                                        | **Registry Explorer**, **RECmd**, **Autoruns**                        |
 | **Services**                   | Persistence via background/system-level services                                       | **Autoruns**, **sc.exe**, **Registry Explorer**                       |
 | **Scheduled Tasks**            | Persistence via timed or trigger-based execution                                       | **Autoruns**, **schtasks.exe**, **Task Scheduler**, **RECmd**         |
-
----
-
-| Goal                   | Tool              |
-| ---------------------- | ----------------- |
-| Parse Registry Fast    | RECmd             |
-| Deep Registry Analysis | Registry Explorer |
-| Parse Event Logs       | EvtxECmd          |
-| Detect Attacks in Logs | Chainsaw          |
-| Build Timeline         | MFTECmd           |
-| Confirm Execution      | AmCache           |
-| Find Tools Used        | ShimCache         |
-| Find Persistence       | Autoruns          |
-| Analyze Browser        | Hindsight         |
-
 
 
 # **1. Investigation Flow (Big Picture)**
