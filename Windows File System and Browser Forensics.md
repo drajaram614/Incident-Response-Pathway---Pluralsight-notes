@@ -581,3 +581,521 @@ hindsight.exe -t UTC -f xlsx -b Chrome -i "profile\path" -o output --nocopy
 
 ---
 
+
+# 🛡️ Windows Registry Forensics & Incident Notes
+
+# 1. 🧠 Overview
+
+This guide walks through a **realistic Windows forensic investigation**, showing how to:
+
+* Identify **initial access**
+* Track **attacker activity**
+* Confirm **malware execution**
+* Detect **persistence mechanisms**
+* Build a **timeline of compromise**
+
+---
+
+# 2. 🔄 Investigation Workflow
+
+Follow this order:
+
+```
+1. Identify suspicious file access
+2. Check user activity (folders & execution)
+3. Identify files that existed on system
+4. Confirm execution of programs
+5. Detect attacker entry point
+6. Identify persistence mechanisms
+7. Correlate everything into a timeline
+```
+
+---
+
+# 3. 🧰 Tools Used
+
+## 🔹 RECmd (Eric Zimmerman)
+
+### Purpose
+
+* Extract registry data
+* Automate large-scale analysis
+
+### Key Features
+
+* Batch processing (`.reb` files)
+* Regex search
+* Recover deleted registry data
+
+---
+
+## 🔹 Timeline Explorer
+
+### Purpose
+
+* View and analyze CSV output from tools
+
+### Why Important
+
+* Makes large datasets readable
+* Enables filtering/sorting
+
+---
+
+## 🔹 RegRipper
+
+### Purpose
+
+* Parse registry artifacts quickly
+
+---
+
+## 🔹 Autoruns (Microsoft)
+
+### Purpose
+
+* Detect persistence locations (live systems)
+
+### Limitation
+
+* Not ideal for offline analysis
+
+---
+
+## 🔹 VirusTotal
+
+### Purpose
+
+* Validate file hashes
+* Identify malware
+
+---
+
+# 4. 🧾 Registry Artifact Analysis
+
+---
+
+## 🔹 RecentDocs
+
+### Location
+
+```
+NTUSER.DAT
+```
+
+### Purpose
+
+* Tracks recently accessed files
+
+### Finding
+
+```
+start.vbs
+```
+
+### Why Important
+
+* `.vbs` scripts often used for:
+
+  * Malware
+  * Persistence
+
+---
+
+## 🔹 ShellBags
+
+### Location
+
+```
+UsrClass.dat
+```
+
+### Purpose
+
+* Tracks folders accessed in Explorer
+
+### Finding
+
+```
+Startup Folder accessed
+```
+
+### Why Important
+
+* Startup folder = auto-execution on login
+
+---
+
+## 🔹 Timeline Correlation
+
+| Event              | Time     |
+| ------------------ | -------- |
+| start.vbs accessed | 19:37:16 |
+| Startup modified   | 19:38:10 |
+
+### Insight
+
+* Likely persistence via Startup folder
+
+---
+
+## 🔹 ShimCache
+
+### Location
+
+```
+SYSTEM hive
+```
+
+### Purpose
+
+* Shows files that existed
+
+### Limitation
+
+* ❌ Does NOT confirm execution
+
+### Findings
+
+* SocksEscort
+* Firefox installer
+* Exodus-related files
+
+---
+
+## 🔹 AmCache
+
+### Location
+
+```
+Amcache.hve
+```
+
+### Purpose
+
+* Confirms program execution
+
+### Limitation
+
+* Timestamp = last modified, not execution time
+
+### Findings
+
+* system.exe (malicious)
+* ntlhost.exe
+* Exodus tools
+
+---
+
+## 🔹 UserAssist
+
+### Location
+
+```
+NTUSER.DAT
+```
+
+### Purpose
+
+* Tracks executed programs
+
+### Finding
+
+```
+\\tsclient\
+```
+
+### Key Insight
+
+* Indicates **RDP usage**
+
+---
+
+# 5. 🔁 Persistence Analysis
+
+---
+
+## 🔹 Run Keys
+
+### Location
+
+```
+Software\Microsoft\Windows\CurrentVersion\Run
+```
+
+### Purpose
+
+* Auto-start programs
+
+### Types
+
+* HKLM → system startup
+* HKCU → user login
+
+### Finding
+
+```
+ntlhost.exe.exe
+```
+
+### Red Flags
+
+* Double extensions
+* Unknown executables
+
+---
+
+## 🔹 Services
+
+### Location
+
+```
+HKLM\SYSTEM\CurrentControlSet\Services
+```
+
+### Key Value
+
+```
+ImagePath
+```
+
+### What to Look For
+
+* Suspicious executables
+* Non-standard paths
+
+---
+
+### svchost Trick
+
+### Legit Paths
+
+```
+C:\Windows\System32
+C:\Windows\SysWOW64
+```
+
+### Malicious Behavior
+
+* Fake svchost.exe
+* Malicious DLL loading
+
+---
+
+### DLL Location
+
+```
+Services\<Service>\Parameters\ServiceDll
+```
+
+---
+
+## 🔹 Scheduled Tasks
+
+### Location
+
+```
+HKLM\Software\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache
+```
+
+### Structure
+
+#### Tree
+
+* Contains task names + GUID
+
+#### Tasks
+
+* Contains task details
+
+---
+
+### Key Value
+
+* **Actions** → execution path
+
+### Why Important
+
+* Can run malware repeatedly
+
+---
+
+# 6. 💻 Commands & Tool Usage
+
+---
+
+## 🔹 RECmd Command
+
+```bash
+RECmd.exe -d Evidence\Clean --csv Evidence\persistence --csvf persistence.csv --bn RegistryASEPs.reb
+```
+
+---
+
+### 🔍 Command Breakdown
+
+| Option   | Meaning                     |
+| -------- | --------------------------- |
+| `-d`     | Directory of registry hives |
+| `--csv`  | Output folder               |
+| `--csvf` | Output file                 |
+| `--bn`   | Batch file                  |
+
+---
+
+## 🔹 Batch File Used
+
+```
+RegistryASEPs.reb
+```
+
+### Purpose
+
+* Extract all persistence locations
+
+---
+
+## 🔹 Workflow
+
+1. Run RECmd
+2. Generate CSV (~78k entries possible)
+3. Open in Timeline Explorer
+4. Filter:
+
+   * Run keys
+   * Services
+   * Tasks
+
+---
+
+# 7. 🧠 Full Attack Timeline Reconstruction
+
+---
+
+## Step 1: Initial Access
+
+* Attacker uses **RDP**
+* Evidence:
+
+  ```
+  \\tsclient\
+  ```
+
+---
+
+## Step 2: Initial Execution
+
+* Runs files remotely
+* Drops:
+
+  ```
+  start.vbs
+  ```
+
+---
+
+## Step 3: Persistence Setup
+
+* Accesses Startup folder
+* Likely places script
+
+---
+
+## Step 4: Tool Deployment
+
+* Downloads:
+
+  * Firefox
+  * SocksEscort
+  * Exodus tools
+
+---
+
+## Step 5: Malware Execution
+
+* Runs:
+
+  * system.exe (confirmed malware)
+  * ntlhost.exe
+
+---
+
+## Step 6: Persistence Reinforcement
+
+* Adds:
+
+  ```
+  ntlhost.exe.exe
+  ```
+* To Run key
+
+---
+
+## Step 7: Continued Activity
+
+* Executes tools over time
+* Maintains access
+
+---
+
+# 8. ⚠️ What to Look For (Quick Cheat Sheet)
+
+---
+
+## 🚨 Red Flags
+
+* `.exe.exe` files
+* Scripts in Startup folder
+* Unknown services
+* Suspicious scheduled tasks
+* Files in temp/user directories
+
+---
+
+## 🔍 Key Registry Areas
+
+| Artifact        | Purpose                |
+| --------------- | ---------------------- |
+| RecentDocs      | File access            |
+| ShellBags       | Folder access          |
+| ShimCache       | File existence         |
+| AmCache         | Execution              |
+| UserAssist      | User execution         |
+| Run Keys        | Persistence            |
+| Services        | Background persistence |
+| Scheduled Tasks | Repeated execution     |
+
+---
+
+# 9. 🎯 Key Takeaways
+
+---
+
+## 🔑 Core Lessons
+
+* Registry = **goldmine of forensic evidence**
+* No single artifact is enough → **correlation is key**
+* Timeline building is critical
+* Attackers commonly use:
+
+  * RDP
+  * Scripts
+  * Run keys
+  * Services
+  * Scheduled tasks
+
+---
+
+## 🧠 Final Insight
+
+Even without direct proof of every action, combining:
+
+* File access
+* Execution evidence
+* Persistence artifacts
+
+➡️ Allows you to reconstruct a **clear, defensible attack story**
+
+---
+
+
