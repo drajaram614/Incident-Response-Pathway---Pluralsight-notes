@@ -7,11 +7,9 @@
 - [Detection & Analysis Initial Triage](Detection & Analysis Initial Triage.pdf)
 - [Host Analysis](Host Analysis.pdf)
 - [Eradication Phase](Eradication Phase.pdf)
-- [Network Analysis](Network Analysis.pdf)
-- [Windows Event Logs, Analysis, Registry & File System Forensics](Windows Event Logs, Analysis, Registry & File System Forensics.pdf)
-- [Labs](Labs.pdf)
-- [GRC + Incident + Pentesting](GRC + Incident + Pentesting.pdf)
 - [Incident response detection pathway notes](Incident response detection pathway notes.pdf)
+- [Windows Event Logs, Analysis, Registry & File System Forensics](Windows Event Logs, Analysis, Registry & File System Forensics.pdf)
+- [GRC + Incident + Pentesting](GRC + Incident + Pentesting.pdf)
 - [Cyber Kill Chain](Cyber Kill Chain.pdf)
 - [MITRE ATT&CK Framework](MITRE ATT&CK Framework.pdf)
 
@@ -35,9 +33,6 @@
 
 - [Network Analysis](Network Analysis.pdf)
 - [Network analysis notes](Network analysis notes.pdf)
-- [Wireshark](Wireshark.pdf)
-- [Zeek](Zeek.pdf)
-- [ZEEK Examples](ZEEK Examples.pdf)
 - [Arkime (formerly Moloch) – Notes](Arkime (formerly Moloch) – Notes.pdf)
 - [DNS](DNS.pdf)
 - [TCP and UDP](TCP and UDP.pdf)
@@ -46,8 +41,10 @@
 
 ---
 
-## General / Cross-Domain Security Topics
+## Cross-Domain / General
 
+- [Labs](Labs.pdf)
+- [Wireshark](Wireshark.pdf)
+- [Zeek](Zeek.pdf)
+- [ZEEK Examples](ZEEK Examples.pdf)
 - [OWASP TOP 10](OWASP TOP 10.pdf)
-- [Cyber Kill Chain](Cyber Kill Chain.pdf)
-- [MITRE ATT&CK Framework](MITRE ATT&CK Framework.pdf)
