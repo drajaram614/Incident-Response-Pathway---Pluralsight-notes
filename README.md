@@ -25,7 +25,7 @@
 
 ---
 
-## Network Analysis Pathway
+## Network Analysis courses
 
 - [Wireshark](Wireshark.pdf)
 - [Zeek](Zeek.pdf)
@@ -37,8 +37,6 @@
 - [System Hardening & Windows Endpoint Security Networking](System%20Hardening%20%26%20Windows%20Endpoint%20Security%20Networking.pdf)
 
 ---
-
-## General / Cross-Domain Security Topics
 
 - [OWASP TOP 10](OWASP%20TOP%2010.pdf)
 - [Cyber Kill Chain](Cyber%20Kill%20Chain.pdf)
